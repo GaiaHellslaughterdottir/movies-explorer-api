@@ -5,7 +5,8 @@ const ForbiddenError = require('../errors/forbidden');
 
 module.exports.postMovie = (req, res, next) => {
   const userId = req.user._id;
-  const { country,
+  const {
+    country,
     director,
     duration,
     year,
@@ -18,7 +19,8 @@ module.exports.postMovie = (req, res, next) => {
     nameEN,
   } = req.body;
 
-  Card.create({ country,
+  Card.create({
+    country,
     director,
     duration,
     year,
@@ -29,7 +31,8 @@ module.exports.postMovie = (req, res, next) => {
     movieId,
     nameRU,
     nameEN,
-    owner: userId })
+    owner: userId,
+  })
     .then((movie) => res.send(movie))
     .catch((err) => {
       if (err.name === 'ValidationError') {
@@ -49,7 +52,7 @@ module.exports.getMovieList = (req, res, next) => {
 };
 
 module.exports.deleteMovieById = (req, res, next) => {
-  Card.findByIdAndRemove(req.params.cardId)
+  Card.findByIdAndRemove(req.params.movieId)
     .then((movie) => {
       if ((movie) == null) {
         throw new NotFoundError('Такой фильм не найден');

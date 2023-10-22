@@ -8,7 +8,7 @@ const ConflictError = require('../errors/conflict');
 
 module.exports.postUser = (req, res, next) => {
   const {
-    name, email,
+    name, email, password,
   } = req.body;
 
   bcrypt.hash(password, 10)
