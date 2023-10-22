@@ -6,6 +6,8 @@ const NotFoundError = require('../errors/not-found-err');
 const UnauthorizedError = require('../errors/unauthorized');
 const ConflictError = require('../errors/conflict');
 
+const constants = require('../utils/constants');
+
 module.exports.postUser = (req, res, next) => {
   const {
     name, email, password,
@@ -23,15 +25,15 @@ module.exports.postUser = (req, res, next) => {
       })
       .catch((err) => {
         if (err.name === 'ValidationError') {
-          next(new BadRequestError('Данные пользователя введены некорректно'));
+          next(new BadRequestError(constants.messages.userIncorrectFields));
         } else if ('MongoServerError') {
-          next(new ConflictError('Пользователь с таким e-mail уже существует'));
+          next(new ConflictError(constants.messages.userDuplicateEmail));
         } else {
           next(err);
         }
       }))
     .catch(() => {
-      next(new BadRequestError('Пароль пользователя задан некорректно'));
+      next(new BadRequestError(constants.messages.userIncorrectPassword));
     });
 };
 
@@ -39,13 +41,13 @@ module.exports.getCurrentUser = (req, res, next) => {
   User.findById(req.user._id)
     .then((user) => {
       if (user == null) {
-        throw new NotFoundError('Такой пользователь не найден');
+        throw new NotFoundError(constants.messages.userNotFound);
       }
       return res.send(user);
     })
     .catch((err) => {
       if (err.name === 'CastError') {
-        next(new BadRequestError('ID пользователя задан не корректно'));
+        next(new BadRequestError(constants.messages.userNotFound));
       } else {
         next(err);
       }
@@ -60,7 +62,7 @@ module.exports.updateProfile = (req, res, next) => {
       res.send(user)))
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        next(new BadRequestError('Данные пользователя введены некорректно'));
+        next(new BadRequestError(constants.messages.userIncorrectFields));
       } else {
         next(err);
       }
@@ -72,20 +74,21 @@ module.exports.login = (req, res, next) => {
   User.findOne({ email }).select('+password')
     .then((user) => {
       if (!user) {
-        return Promise.reject(new Error('Неправильные почта или пароль'));
+        return Promise.reject(new Error(constants.messages.userIncorrectLoginOrPassword));
       }
       bcrypt.compare(password, user.password)
         .then((result) => {
           if (!result) {
-            return Promise.reject(new Error('Неправильные почта или пароль'));
+            return Promise.reject(new Error(constants.messages.userIncorrectLoginOrPassword));
           }
           const token = jwt.sign(
             { _id: user._id },
-            process.env.NODE_ENV !== 'production' ? 'some-secret-key' : process.env.JWT_SECRET,
-            { expiresIn: '7d' },
+            process.env.NODE_ENV !== constants.productionModeKey
+              ? constants.secretKey : process.env.JWT_SECRET,
+            { expiresIn: constants.tokenExpiredIn },
           );
           return res.cookie('jwt', token, {
-            maxAge: 604800000,
+            maxAge: constants.tokenMaxAge,
             httpOnly: true,
           })
             .send({ token })
@@ -93,12 +96,12 @@ module.exports.login = (req, res, next) => {
         })
         .catch((err) => {
           console.log(err);
-          next(new UnauthorizedError('Логин или пароль пользователя введены неверно'));
+          next(new UnauthorizedError(constants.messages.userIncorrectLoginOrPassword));
         });
       return true;
     })
     .catch((err) => {
       console.log(err);
-      next(new UnauthorizedError('Логин или пароль пользователя введены неверно'));
+      next(new UnauthorizedError(constants.messages.userIncorrectLoginOrPassword));
     });
 };
