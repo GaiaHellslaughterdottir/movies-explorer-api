@@ -46,7 +46,7 @@ module.exports.postMovie = (req, res, next) => {
 };
 
 module.exports.getMovieList = (req, res, next) => {
-  Card.find({})
+  Card.find({ owner: req.user._id })
     .then((movie) => res.send(movie))
     .catch((err) => {
       next(err);

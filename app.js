@@ -1,12 +1,13 @@
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const { rateLimit } = require('express-rate-limit');
 const process = require('process');
 const http2 = require('http2');
 const { Joi, celebrate, errors } = require('celebrate');
-const { login, postUser } = require('./controllers/users');
+const { login, postUser, logout } = require('./controllers/users');
 const auth = require('./middlewares/auth');
 const UnauthorizedError = require('./errors/unauthorized');
 const BadRequestError = require('./errors/bad-request');
@@ -21,7 +22,8 @@ const app = express();
 
 require('dotenv').config();
 
-mongoose.connect(constants.databaseUrl, {});
+mongoose.connect(process.env.NODE_ENV !== constants.productionModeKey
+  ? constants.databaseUrl : process.env.DB_URL, {});
 
 const limiter = rateLimit({
   windowMs: 60 * 1000,
@@ -30,6 +32,8 @@ const limiter = rateLimit({
   legacyHeaders: false,
 });
 app.use(limiter);
+
+app.use(helmet());
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -54,6 +58,8 @@ app.use('/signin', celebrate({
 }), login);
 
 app.use(auth);
+
+app.use('/signout', logout);
 
 app.use('/', require('./routes/index'));
 

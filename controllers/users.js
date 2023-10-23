@@ -26,7 +26,7 @@ module.exports.postUser = (req, res, next) => {
       .catch((err) => {
         if (err.name === 'ValidationError') {
           next(new BadRequestError(constants.messages.userIncorrectFields));
-        } else if ('MongoServerError') {
+        } else if (err.name === 'MongoServerError') {
           next(new ConflictError(constants.messages.userDuplicateEmail));
         } else {
           next(err);
@@ -63,6 +63,8 @@ module.exports.updateProfile = (req, res, next) => {
     .catch((err) => {
       if (err.name === 'ValidationError') {
         next(new BadRequestError(constants.messages.userIncorrectFields));
+      } else if (err.name === 'MongoServerError') {
+        next(new BadRequestError(constants.messages.userDuplicateEmail));
       } else {
         next(err);
       }
@@ -104,4 +106,9 @@ module.exports.login = (req, res, next) => {
       console.log(err);
       next(new UnauthorizedError(constants.messages.userIncorrectLoginOrPassword));
     });
+};
+
+module.exports.logout = (req, res) => {
+  res.clearCookie('jwt');
+  res.end();
 };
