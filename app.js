@@ -6,9 +6,7 @@ const bodyParser = require('body-parser');
 const { rateLimit } = require('express-rate-limit');
 const process = require('process');
 const http2 = require('http2');
-const { Joi, celebrate, errors } = require('celebrate');
-const { login, postUser, logout } = require('./controllers/users');
-const auth = require('./middlewares/auth');
+const { errors } = require('celebrate');
 const UnauthorizedError = require('./errors/unauthorized');
 const BadRequestError = require('./errors/bad-request');
 const NotFoundError = require('./errors/not-found-err');
@@ -43,29 +41,7 @@ app.use(cors({
 
 app.use(requestLogger);
 
-app.use('/signup', celebrate({
-  body: Joi.object().keys({
-    name: Joi.string().min(2).max(30),
-    email: Joi.string().required().regex(constants.emailRegexPattern),
-    password: Joi.string().required(),
-  }),
-}), postUser);
-app.use('/signin', celebrate({
-  body: Joi.object().keys({
-    email: Joi.string().required().regex(constants.emailRegexPattern),
-    password: Joi.string().required(),
-  }),
-}), login);
-
-app.use(auth);
-
-app.use('/signout', logout);
-
 app.use('/', require('./routes/index'));
-
-app.use(() => {
-  throw new NotFoundError(constants.messages.pageNotFound);
-});
 
 app.use(errorLogger);
 
