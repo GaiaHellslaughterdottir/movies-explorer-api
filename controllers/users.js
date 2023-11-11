@@ -64,7 +64,7 @@ module.exports.updateProfile = (req, res, next) => {
       if (err.name === 'ValidationError') {
         next(new BadRequestError(constants.messages.userIncorrectFields));
       } else if (err.name === 'MongoServerError') {
-        next(new BadRequestError(constants.messages.userDuplicateEmail));
+        next(new ConflictError(constants.messages.userDuplicateEmail));
       } else {
         next(err);
       }
